@@ -82,3 +82,17 @@ actual limit and interpretation of reasoning effort have not been independently 
 deepseek-v4-pro text requests succeeded, but both Responses and Chat image probes
 reported no visible images. Keep that entry out of the live robot dropdown until
 visual input is verified. A valid zero action alone is not a vision test.
+
+## Hardware-free migration check
+
+Run from the repository after configuring the model entries and separate secret files:
+
+    python examples/models/openai/deploy/check_synthetic.py --config /path/to/api-smoke.yaml --model gpt_62_sol
+
+This sends three generated colored shapes across two full-history turns. It opens
+no hardware and validates zero-delta actions. Review the descriptions as well:
+the protocol PASS alone does not establish that the model can see images.
+The same check supports the local served model and the configured Kimi entry.
+Keep each station's CAN adapters, camera serials and calibration separate.
+Recreate virtual environments with scripts/install.sh under the target WORK_DIR;
+do not copy an environment containing absolute paths from a different account.
