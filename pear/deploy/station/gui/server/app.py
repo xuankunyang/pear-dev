@@ -19,7 +19,7 @@ class ServerApp:
     """The aiohttp application of one console: the checks before every route, the routes, the page and the background
     threads."""
 
-    MAX_BODY_BYTES = 16384  # of a request's body; an upload's route reads more
+    MAX_BODY_BYTES = 128 * 1024  # fits 20,000-character UTF-8 task instructions and JSON overhead; uploads read more
     MODEL_POLL_S = 5  # between two checks of the selected model's connection
     UPLOAD_CLEANUP_S = 60  # between two removals of the expired draft images
     STATIC_DIR = Path(__file__).parents[1] / "static"  # the page: its index and the assets the index loads

@@ -631,3 +631,57 @@ def test_a_task_s_merged_videos_are_rendered_and_served_over_http(console):
             assert (await client.post(f"/api/history/{'0' * 32}/recordings/merged")).status == 404
 
     asyncio.run(scenario())
+
+
+@pytest.mark.parametrize("robot_name", ["yam"])
+@pytest.mark.parametrize("character", ["x", "签", "🤖"])
+def test_request_body_accepts_a_full_length_task_instruction(console, monkeypatch, character):
+    instruction = character * 20_000
+    calls = []
+
+    def command(name, data):
+        calls.append((name, data))
+        return {"accepted": True}
+
+    monkeypatch.setattr(console.commands, "run", command)
+
+    async def scenario():
+        async with TestClient(TestServer(ServedConsole.app(console, "long-task-token"))) as client:
+            assert (await client.post("/api/auth", json={"token": "long-task-token"})).status == 200
+            body = {
+                "client_id": ConsoleRig.CLIENT_ID,
+                "command_id": str(uuid.uuid4()),
+                "command": "start",
+                "data": {"instruction": instruction},
+            }
+            response = await client.post(
+                "/api/command",
+                data=json.dumps(body, ensure_ascii=False).encode("utf-8"),
+                headers={"Content-Type": "application/json"},
+            )
+            assert response.status == 200
+            assert await response.json() == {"accepted": True}
+
+    asyncio.run(scenario())
+    assert calls == [("start", {"instruction": instruction})]
+
+
+@pytest.mark.parametrize("robot_name", ["yam"])
+def test_request_body_still_rejects_oversized_commands_before_dispatch(console, monkeypatch):
+    calls = []
+    monkeypatch.setattr(console.commands, "run", lambda *args: calls.append(args))
+
+    async def scenario():
+        async with TestClient(TestServer(ServedConsole.app(console, "oversized-task-token"))) as client:
+            assert (await client.post("/api/auth", json={"token": "oversized-task-token"})).status == 200
+            body = {
+                "client_id": ConsoleRig.CLIENT_ID,
+                "command_id": str(uuid.uuid4()),
+                "command": "start",
+                "data": {"instruction": "x" * (ServerApp.MAX_BODY_BYTES + 1)},
+            }
+            response = await client.post("/api/command", json=body)
+            assert response.status == 413
+
+    asyncio.run(scenario())
+    assert calls == []

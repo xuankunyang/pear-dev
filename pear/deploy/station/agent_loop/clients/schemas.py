@@ -82,6 +82,7 @@ class Usage(TypedDict, total=False):
     input: int  # the tokens of the request's prompt
     output: int | None  # the tokens generated
     cached_input: int  # the prompt's tokens the server took from its cache
+    reasoning_tokens: int  # provider-reported internal reasoning tokens, when available
     context_limit: int  # the tokens the model's context can hold
     final: bool  # whether no later report of the request follows
     partial: bool  # whether the counts are lower bounds: the request ended before a service had counted all of it
